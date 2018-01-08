@@ -2,20 +2,40 @@
 #include <cstddef>
 #include <new>
 #include <utility>
+#include <limits>
+#include <array>
 
+template <class T, std::size_t size = 5>
 class MyPool
 {
 public:
-    static MyPool & GetInstance( void )
+    using pointer = T*;
+
+    static MyPool & GetInstance()
     {
         static MyPool retval;
         return retval;
     }
+
+    static pointer GetNext(std::size_t n)
+    {
+        static std::size_t current = 0;
+        if(current >= getSize())
+            return nullptr;
+        return &array[current++];
+    }
+
+    inline size_t getSize()
+    {
+        return array.size();
+    }
+
 private:
-    MyPool(void);
+    MyPool();
+    static std::array<T, size> array;
 };
 
-template <class T1> class MapAllocator;
+template <class T> class MapAllocator;
 
 // Description:
 // Specialize for void
@@ -28,33 +48,39 @@ public:
     template <class U1> struct rebind { using other = MapAllocator<U1>; };
 };
 
-template <class T1> class MapAllocator
+template <class T>
+class MapAllocator
 {
 public:
     // Description:
     // Typedefs
-    using value_type = T1;
+    using value_type = T;
     using size_type = std::size_t ;
     using difference_type = std::ptrdiff_t ;
-    using pointer = T1* ;
-    using const_pointer = const T1* ;
-    using reference = T1& ;
-    using const_reference = const T1& ;
+    using pointer = T* ;
+    using const_pointer = const T* ;
+    using reference = T& ;
+    using const_reference = const T& ;
 
     // Description:
     // The rebind member allows a container to construct an allocator for some arbitrary type out of
     // the allocator type provided as a template parameter.
-    template <class U1> struct rebind { typedef MapAllocator<U1> other; };
+    template <class U>
+    struct rebind
+    {
+        using other = MapAllocator<U>;
+    };
 
     // Description:
     // Constructors
-    MapAllocator( void ) : pool(MyPool::GetInstance()) {}
-    MapAllocator( const MapAllocator& other ) : pool(MyPool::GetInstance()) {}
-    template <class U1> MapAllocator(const MapAllocator<U1>&) : pool(MyPool::GetInstance()) {}
+    MapAllocator() : pool(MyPool<value_type>::GetInstance()) {}
+    MapAllocator( const MapAllocator& other ) : pool(MyPool<value_type>::GetInstance()) {}
+    template <class U>
+    MapAllocator(const MapAllocator<U>&) : pool(MyPool<value_type>::GetInstance()) {}
 
     // Description:
     // Destructor
-    ~MapAllocator( void ) {}
+    ~MapAllocator() {}
 
     // Description:
     // Returns the address of r as a pointer type. This function and the following function are used
@@ -63,15 +89,14 @@ public:
     const_pointer address(const_reference r) const { return &r; }
 
     // Description:
-    // Allocate storage for n values of T1.
+    // Allocate storage for n values of T.
     pointer allocate( size_type n, MapAllocator<void>::const_pointer hint = 0 )
     {
         // I would never do it that way:
         //pointer return_value = reinterpret_cast<pointer>( pool.GetNext() );
         // I would prefer to use the got size to allocate:
-        //    pointer return_value = reinterpret_cast<pointer>( pool.GetNext(n) );
-        pointer return_value = nullptr;
-        if ( return_value == 0 )
+        pointer return_value = reinterpret_cast<pointer>( pool.GetNext(n) );
+        if ( return_value == nullptr )
             throw std::bad_alloc();
         return return_value;
     }
@@ -87,21 +112,9 @@ public:
     // Return the largest possible storage available through a call to allocate.
     size_type max_size() const
     {
-        size_type return_value = 0xFFFFFFFF;
-        return_value /= sizeof(T1);
-        return return_value;
+        return std::numeric_limits<size_type>::max() / sizeof(value_type);
     }
 
-    // Description:
-    // Construct an object of type T1 at the location of ptr
-    void construct(pointer ptr)
-    {
-        ::new (reinterpret_cast<void*>(ptr)) T1;
-    }
-
-    // Description:
-    // Construct an object of type T1 at the location of ptr, using the value of U1 in the call to the
-    // constructor for T1.
     template <typename ...Args>
     void construct(pointer ptr, Args&&... args)
     {
@@ -109,21 +122,13 @@ public:
     }
 
     // Description:
-    // Construct an object of type T1 at the location of ptr, using the value of T1 in the call to the
-    // constructor for T1.
-    void construct(pointer ptr, const T1& val)
-    {
-        ::new (reinterpret_cast<void*>(ptr)) T1(val);
-    }
-
-    // Description:
     // Call the destructor on the value pointed to by p
     void destroy(pointer p)
     {
-        p->T1::~T1();
+        p->~T();
     }
 private:
-    MyPool &pool;
+    MyPool<value_type> &pool;
 };
 
 // Return true if allocators b and a can be safely interchanged. "Safely interchanged" means that b could be
