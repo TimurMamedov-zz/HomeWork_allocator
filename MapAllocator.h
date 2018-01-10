@@ -4,6 +4,7 @@
 #include <utility>
 #include <limits>
 #include <array>
+#include <memory>
 
 template <class T, std::size_t size = 5>
 class MyPool
@@ -11,18 +12,49 @@ class MyPool
 public:
     using pointer = T*;
 
-    static MyPool & GetInstance()
+    MyPool()
     {
-        static MyPool retval;
-        return retval;
+        array = std::make_unique<std::array<std::pair<bool ,T>, size> >();
+        for(auto& elem: array)
+        {
+            elem.first = true;
+        }
     }
 
-    static pointer GetNext(std::size_t n)
+    pointer GetNext(std::size_t n)
     {
-        static std::size_t current = 0;
-        if(current >= getSize())
+        std::size_t count = 0;
+        std::size_t max_count = count;
+        std::size_t index = 0;
+        for(std::size_t i = 0; i < array->size(); i++)
+        {
+            if(array->at(i).first)
+            {
+                count++;
+                if(max_count < count)
+                {
+                    max_count = count;
+                    index = i;
+                }
+            }
+            else
+            {
+                count = 0;
+                index++;
+            }
+        }
+        if(n > max_count)
             return nullptr;
-        return &array[current++];
+        for(std::size_t i = 0; i <= n; i++)
+        {
+
+        }
+        return &(*array)[count];
+    }
+
+    void Free(pointer ptr, std::size_t n)
+    {
+
     }
 
     inline size_t getSize()
@@ -31,8 +63,7 @@ public:
     }
 
 private:
-    MyPool();
-    static std::array<T, size> array;
+    std::unique_ptr<std::array<std::pair<bool ,T>, size> > array;
 };
 
 template <class T> class MapAllocator;
@@ -45,7 +76,12 @@ public:
     using pointer = void*;
     using const_pointer = const void*;
     using value_type = void;
-    template <class U1> struct rebind { using other = MapAllocator<U1>; };
+
+    template <class U>
+    struct rebind
+    {
+        using other = MapAllocator<U>;
+    };
 };
 
 template <class T>
@@ -73,10 +109,19 @@ public:
 
     // Description:
     // Constructors
-    MapAllocator() : pool(MyPool<value_type>::GetInstance()) {}
-    MapAllocator( const MapAllocator& other ) : pool(MyPool<value_type>::GetInstance()) {}
+    MapAllocator()
+    {
+        unique_pool = std::make_unique<MyPool<value_type> >();
+    }
+    MapAllocator( const MapAllocator& other )
+    {
+        unique_pool = std::make_unique<MyPool<value_type> >();
+    }
     template <class U>
-    MapAllocator(const MapAllocator<U>&) : pool(MyPool<value_type>::GetInstance()) {}
+    MapAllocator(const MapAllocator<U>&)
+    {
+        unique_pool = std::make_unique<MyPool<value_type> >();
+    }
 
     // Description:
     // Destructor
@@ -95,7 +140,7 @@ public:
         // I would never do it that way:
         //pointer return_value = reinterpret_cast<pointer>( pool.GetNext() );
         // I would prefer to use the got size to allocate:
-        pointer return_value = reinterpret_cast<pointer>( pool.GetNext(n) );
+        pointer return_value = reinterpret_cast<pointer>( unique_pool->GetNext(n) );
         if ( return_value == nullptr )
             throw std::bad_alloc();
         return return_value;
@@ -105,12 +150,12 @@ public:
     // Deallocate storage obtained by a call to allocate.
     void deallocate(pointer p, size_type n)
     {
-        //    pool.Free(p);
+            unique_pool->Free(p, n);
     }
 
     // Description:
     // Return the largest possible storage available through a call to allocate.
-    size_type max_size() const
+    size_type max_size() const noexcept
     {
         return std::numeric_limits<size_type>::max() / sizeof(value_type);
     }
@@ -128,18 +173,20 @@ public:
         p->~T();
     }
 private:
-    MyPool<value_type> &pool;
+    std::unique_ptr<MyPool<value_type> > unique_pool;
 };
 
 // Return true if allocators b and a can be safely interchanged. "Safely interchanged" means that b could be
 // used to deallocate storage obtained through a and vice versa.
-template <class T1, class T2> bool operator == ( const MapAllocator<T1>& a, const MapAllocator<T2>& b)
+template <class T1, class T2>
+bool operator == ( const MapAllocator<T1>& lhs, const MapAllocator<T2>& rhs) noexcept
 {
     return true;
 }
 // Return false if allocators b and a can be safely interchanged. "Safely interchanged" means that b could be
 // used to deallocate storage obtained through a and vice versa.
-template <class T1, class T2> bool operator != ( const MapAllocator<T1>& a, const MapAllocator<T2>& b)
+template <class T1, class T2>
+bool operator != ( const MapAllocator<T1>& lhs, const MapAllocator<T2>& rhs) noexcept
 {
     return false;
 }
