@@ -1,12 +1,60 @@
 #pragma once
+#include <iostream>
+
 #include <cstddef>
 #include <new>
 #include <utility>
 #include <limits>
 #include <array>
+#include <vector>
 #include <memory>
+#include <assert.h>
 
-template <class T, std::size_t size = 5>
+template <class T, std::size_t size>
+class Chunk
+{
+public:
+    using pointer = T*;
+    using array_type = std::array<T, size>;
+
+    std::size_t getAvailableSpace() const noexcept
+    {
+        return size - current - 1;
+    }
+    pointer getAvailableElem(std::size_t n) noexcept
+    {
+        if(current >= size)
+            return nullptr;
+        auto ptrElem = &array[current];
+        current += n;
+        return ptrElem;
+    }
+
+    inline bool isOwned(pointer p) const noexcept
+    {
+        if(p >= &array[0] && p <= &array[size-1])
+            return true;
+        return false;
+    }
+
+    void free(pointer ptr, std::size_t n)
+    {
+        for(std::size_t i = 0; i < array.size(); i++)
+        {
+            if(&array[i] == ptr && ((i+n) == current) )
+            {
+                current -= n;
+                break;
+            }
+        }
+    }
+
+private:
+    array_type array;
+    std::size_t current = 0;
+};
+
+template <class T, std::size_t size = 10>
 class MyPool
 {
 public:
@@ -14,63 +62,52 @@ public:
 
     MyPool()
     {
-        array = std::make_unique<std::array<std::pair<bool ,T>, size> >();
-        for(auto& elem: array)
-        {
-            elem.first = true;
-        }
+        chunk_pool.emplace_back(std::make_unique<Chunk<T, size> >());
     }
 
     pointer GetNext(std::size_t n)
     {
-        std::size_t count = 0;
-        std::size_t max_count = count;
-        std::size_t index = 0;
-        for(std::size_t i = 0; i < array->size(); i++)
+        assert(n <= size);
+        if(chunk_pool.size())
         {
-            if(array->at(i).first)
+            if(n <= chunk_pool[chunk_pool.size()-1]->getAvailableSpace())
             {
-                count++;
-                if(max_count < count)
-                {
-                    max_count = count;
-                    index = i;
-                }
+                return chunk_pool[chunk_pool.size()-1]->getAvailableElem(n);
             }
             else
             {
-                count = 0;
-                index++;
+                chunk_pool.emplace_back(std::make_unique<Chunk<T, size> >());
+                GetNext(n);
             }
         }
-        if(n > max_count)
-            return nullptr;
-        for(std::size_t i = 0; i <= n; i++)
+        else
         {
-
+            chunk_pool.emplace_back(std::make_unique<Chunk<T, size> >());
+            GetNext(n);
         }
-        return &(*array)[count];
     }
 
     void Free(pointer ptr, std::size_t n)
     {
-
-    }
-
-    inline size_t getSize()
-    {
-        return array.size();
+        for(auto& pool : chunk_pool)
+        {
+            if(pool->isOwned(ptr))
+            {
+                pool->free(ptr, n);
+                break;
+            }
+        }
     }
 
 private:
-    std::unique_ptr<std::array<std::pair<bool ,T>, size> > array;
+    std::vector<std::unique_ptr<Chunk<T, size> > > chunk_pool;
 };
 
-template <class T> class MapAllocator;
+template <class T> class CustomAllocator;
 
 // Description:
 // Specialize for void
-template <> class MapAllocator<void>
+template <> class CustomAllocator<void>
 {
 public:
     using pointer = void*;
@@ -80,12 +117,12 @@ public:
     template <class U>
     struct rebind
     {
-        using other = MapAllocator<U>;
+        using other = CustomAllocator<U>;
     };
 };
 
 template <class T>
-class MapAllocator
+class CustomAllocator
 {
 public:
     // Description:
@@ -98,63 +135,41 @@ public:
     using reference = T& ;
     using const_reference = const T& ;
 
-    // Description:
-    // The rebind member allows a container to construct an allocator for some arbitrary type out of
-    // the allocator type provided as a template parameter.
     template <class U>
     struct rebind
     {
-        using other = MapAllocator<U>;
+        using other = CustomAllocator<U>;
     };
 
-    // Description:
-    // Constructors
-    MapAllocator()
+    CustomAllocator()
     {
-        unique_pool = std::make_unique<MyPool<value_type> >();
     }
-    MapAllocator( const MapAllocator& other )
+    CustomAllocator( const CustomAllocator& other )
     {
-        unique_pool = std::make_unique<MyPool<value_type> >();
     }
     template <class U>
-    MapAllocator(const MapAllocator<U>&)
+    CustomAllocator(const CustomAllocator<U>&)
     {
-        unique_pool = std::make_unique<MyPool<value_type> >();
     }
 
-    // Description:
-    // Destructor
-    ~MapAllocator() {}
+    ~CustomAllocator() {}
 
-    // Description:
-    // Returns the address of r as a pointer type. This function and the following function are used
-    // to convert references to pointers.
     pointer address(reference r) const { return &r; }
     const_pointer address(const_reference r) const { return &r; }
 
-    // Description:
-    // Allocate storage for n values of T.
-    pointer allocate( size_type n, MapAllocator<void>::const_pointer hint = 0 )
+    pointer allocate( size_type n, CustomAllocator<void>::const_pointer hint = 0 )
     {
-        // I would never do it that way:
-        //pointer return_value = reinterpret_cast<pointer>( pool.GetNext() );
-        // I would prefer to use the got size to allocate:
-        pointer return_value = reinterpret_cast<pointer>( unique_pool->GetNext(n) );
+        pointer return_value = reinterpret_cast<pointer>( myPool.GetNext(n) );
         if ( return_value == nullptr )
             throw std::bad_alloc();
         return return_value;
     }
 
-    // Description:
-    // Deallocate storage obtained by a call to allocate.
     void deallocate(pointer p, size_type n)
     {
-            unique_pool->Free(p, n);
+        myPool.Free(p, n);
     }
 
-    // Description:
-    // Return the largest possible storage available through a call to allocate.
     size_type max_size() const noexcept
     {
         return std::numeric_limits<size_type>::max() / sizeof(value_type);
@@ -166,27 +181,23 @@ public:
         new(ptr)value_type(std::forward<Args>(args)...);
     }
 
-    // Description:
-    // Call the destructor on the value pointed to by p
     void destroy(pointer p)
     {
         p->~T();
     }
+
 private:
-    std::unique_ptr<MyPool<value_type> > unique_pool;
+    MyPool<value_type> myPool;
 };
 
-// Return true if allocators b and a can be safely interchanged. "Safely interchanged" means that b could be
-// used to deallocate storage obtained through a and vice versa.
 template <class T1, class T2>
-bool operator == ( const MapAllocator<T1>& lhs, const MapAllocator<T2>& rhs) noexcept
+bool operator == ( const CustomAllocator<T1>& lhs, const CustomAllocator<T2>& rhs) noexcept
 {
     return true;
 }
-// Return false if allocators b and a can be safely interchanged. "Safely interchanged" means that b could be
-// used to deallocate storage obtained through a and vice versa.
+
 template <class T1, class T2>
-bool operator != ( const MapAllocator<T1>& lhs, const MapAllocator<T2>& rhs) noexcept
+bool operator != ( const CustomAllocator<T1>& lhs, const CustomAllocator<T2>& rhs) noexcept
 {
     return false;
 }
