@@ -13,8 +13,8 @@ project(allocator)
 
 configure_file(version.h.in version.h)
 
-set(SOURCES MapAllocator.cpp)
-set(HEADERS MapAllocator.h)
+set(SOURCES CustomConteiner.cpp)
+set(HEADERS MapAllocator.h ChunkPool.h functions.h CustomConteiner.h)
 
 add_executable(allocator ${HEADERS} ${SOURCES} main.cpp)
 
