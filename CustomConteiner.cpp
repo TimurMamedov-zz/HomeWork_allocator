@@ -1,130 +1,6 @@
 #include "CustomConteiner.h"
 
 template <class T, class Alloc>
-CustomContainer<T, Alloc>::iterator::iterator()
-{
-}
-
-template <class T, class Alloc>
-CustomContainer<T, Alloc>::iterator::iterator(const CustomContainer::iterator &it)
-{
-    pNode = it.pNode;
-}
-
-template <class T, class Alloc>
-CustomContainer<T, Alloc>::iterator::~iterator()
-{
-}
-
-template <class T, class Alloc>
-typename CustomContainer<T, Alloc>::iterator&
-CustomContainer<T, Alloc>::iterator::operator=(const CustomContainer<T, Alloc>::iterator &it)
-{
-    if(pNode != it.pNode)
-        pNode = it.pNode;
-    return this;
-}
-
-template <class T, class Alloc>
-bool CustomContainer<T, Alloc>::iterator::operator==(const CustomContainer::iterator &it) const
-{
-    return pNode == it.pNode;
-}
-
-template <class T, class Alloc>
-bool CustomContainer<T, Alloc>::iterator::operator!=(const CustomContainer::iterator &it) const
-{
-    return pNode != it.pNode;
-}
-
-template <class T, class Alloc>
-typename CustomContainer<T, Alloc>::iterator&
-CustomContainer<T, Alloc>::iterator::operator++()
-{
-    pNode = pNode->next;
-    return pNode;
-}
-
-template <class T, class Alloc>
-typename CustomContainer<T, Alloc>::iterator::reference
-CustomContainer<T, Alloc>::iterator::operator*() const
-{
-    return pNode->value;
-}
-
-template <class T, class Alloc>
-typename CustomContainer<T, Alloc>::iterator::pointer
-CustomContainer<T, Alloc>::iterator::operator->() const
-{
-    return &pNode->value;
-}
-
-
-template <class T, class Alloc>
-CustomContainer<T, Alloc>::const_iterator::const_iterator()
-{
-}
-
-template <class T, class Alloc>
-CustomContainer<T, Alloc>::const_iterator::const_iterator(const CustomContainer<T, Alloc>::const_iterator &it)
-{
-    pNode = it.pNode;
-}
-
-template <class T, class Alloc>
-CustomContainer<T, Alloc>::const_iterator::const_iterator(const CustomContainer<T, Alloc>::iterator &it)
-{
-    pNode = it.pNode;
-}
-
-template <class T, class Alloc>
-CustomContainer<T, Alloc>::const_iterator::~const_iterator()
-{
-}
-
-template <class T, class Alloc>
-typename CustomContainer<T, Alloc>::const_iterator&
-CustomContainer<T, Alloc>::const_iterator::operator=(const CustomContainer<T, Alloc>::const_iterator &it)
-{
-    if(pNode != it.pNode)
-        pNode = it.pNode;
-    return this;
-}
-
-template <class T, class Alloc>
-bool CustomContainer<T, Alloc>::const_iterator::operator==(const CustomContainer<T, Alloc>::const_iterator &it) const
-{
-    return pNode == it.pNode;
-}
-
-template <class T, class Alloc>
-bool CustomContainer<T, Alloc>::const_iterator::operator!=(const CustomContainer<T, Alloc>::const_iterator &it) const
-{
-    return pNode != it.pNode;
-}
-
-template <class T, class Alloc>
-typename CustomContainer<T, Alloc>::const_iterator &CustomContainer<T, Alloc>::const_iterator::operator++()
-{
-    pNode = pNode->next;
-    return pNode;
-}
-
-template <class T, class Alloc>
-typename CustomContainer<T, Alloc>::const_reference
-CustomContainer<T, Alloc>::const_iterator::operator*() const
-{
-    return pNode->value;
-}
-
-template <class T, class Alloc>
-typename CustomContainer<T, Alloc>::const_iterator::const_pointer
-CustomContainer<T, Alloc>::const_iterator::operator->() const
-{
-    return &pNode->value;
-}
-
-template <class T, class Alloc>
 CustomContainer<T, Alloc>::CustomContainer()
 {
 }
@@ -169,8 +45,7 @@ bool CustomContainer<T, Alloc>::operator!=(const CustomContainer<T, Alloc> &) co
 template <class T, class Alloc>
 void CustomContainer<T, Alloc>::push_back(const CustomContainer<T, Alloc>::value_type &value)
 {
-    auto ptr = alloc_.allocate(1);
-    alloc_.construct(ptr, value);
+
 }
 
 template <class T, class Alloc>
