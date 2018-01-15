@@ -1,8 +1,14 @@
 #pragma once
 #include <memory>
 
+template<typename _Tp, typename _Alloc>
+class CustomContainer_Base
+{
+
+};
+
 template <class T, class Alloc = std::allocator<T> >
-class CustomContainer
+class CustomContainer : protected CustomContainer_Base<T, Alloc>
 {
     Alloc alloc_;
 

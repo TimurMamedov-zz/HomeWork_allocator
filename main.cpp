@@ -1,7 +1,7 @@
 #include <iostream>
 #include <map>
 
-#include "MapAllocator.h"
+#include "CustomAllocator.h"
 #include "functions.h"
 
 int main(int argc, char const *argv[])

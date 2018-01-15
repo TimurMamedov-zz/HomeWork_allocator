@@ -99,3 +99,4 @@ public:
 private:
     std::vector<std::unique_ptr<Chunk<T, size> > > chunk_pool;
 };
+//-----------------------------------------------------------------------------------

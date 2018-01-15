@@ -6,7 +6,7 @@ project(allocator)
 #SET (BOOST_ROOT "C:/Library/boost_1_62_0")
 #SET (BOOST_INCLUDEDIR "C:/Library/boost_1_62_0/boost")
 #SET (BOOST_LIBRARYDIR "C:/Library/boost_1_62_0/stage/lib")
-#SET (Boost_USE_STATIC_LIBS   ON)
+#SET (Boost_USE_STATIC_LIBS ON)
 #set(Boost_USE_MULTITHREADED ON)
 
 #find_package(Boost COMPONENTS unit_test_framework REQUIRED)
@@ -14,7 +14,7 @@ project(allocator)
 configure_file(version.h.in version.h)
 
 set(SOURCES CustomConteiner.cpp)
-set(HEADERS MapAllocator.h ChunkPool.h functions.h CustomConteiner.h)
+set(HEADERS CustomAllocator.h ChunkPool.h functions.h CustomConteiner.h)
 
 add_executable(allocator ${HEADERS} ${SOURCES} main.cpp)
 
