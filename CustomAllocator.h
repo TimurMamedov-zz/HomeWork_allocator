@@ -3,8 +3,6 @@
 
 template <class T> class CustomAllocator;
 
-// Description:
-// Specialize for void
 template <> class CustomAllocator<void>
 {
 public:
@@ -23,8 +21,6 @@ template <class T>
 class CustomAllocator
 {
 public:
-    // Description:
-    // Typedefs
     using value_type = T;
     using size_type = std::size_t ;
     using difference_type = std::ptrdiff_t ;

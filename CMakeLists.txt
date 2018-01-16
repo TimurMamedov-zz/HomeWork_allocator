@@ -13,8 +13,8 @@ project(allocator)
 
 configure_file(version.h.in version.h)
 
-set(SOURCES CustomConteiner.cpp)
-set(HEADERS CustomAllocator.h ChunkPool.h functions.h CustomConteiner.h)
+#set(SOURCES CustomContainer.cpp)
+set(HEADERS CustomAllocator.h ChunkPool.h functions.h CustomContainer.h)
 
 add_executable(allocator ${HEADERS} ${SOURCES} main.cpp)
 

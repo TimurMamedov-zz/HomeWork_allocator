@@ -3,6 +3,7 @@
 
 #include "CustomAllocator.h"
 #include "functions.h"
+#include "CustomContainer.h"
 
 int main(int argc, char const *argv[])
 {
@@ -15,6 +16,15 @@ int main(int argc, char const *argv[])
         for(const auto& elem : map)
         {
            std::cout << elem.first << " " << elem.second << "\n";
+        }
+
+        CustomContainer<int> list;
+        for(std::uint64_t i = 0; i < 10; i++)
+            list.push_back(i);
+
+        for(const auto& elem : list)
+        {
+           std::cout << elem << "\n";
         }
     }
     catch(const std::exception &e)

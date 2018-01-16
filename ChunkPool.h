@@ -22,6 +22,7 @@ public:
             return nullptr;
         auto ptrElem = &array[current];
         current += n;
+        SIZE += n;
         return ptrElem;
     }
 
@@ -39,14 +40,26 @@ public:
             if(&array[i] == ptr && ((i+n) == current) )
             {
                 current -= n;
+                SIZE -= n;
+                break;
+            }
+            else if(&array[i] == ptr)
+            {
+                SIZE -= n;
                 break;
             }
         }
     }
 
+    inline bool empty() const
+    {
+        return !SIZE;
+    }
+
 private:
     array_type array;
     std::size_t current = 0;
+    std::size_t SIZE = size;
 };
 
 template <class T, std::size_t size = 10>
@@ -89,7 +102,7 @@ public:
             if((*it)->isOwned(ptr))
             {
                 (*it)->free(ptr, n);
-                if((*it)->getAvailableSpace() == size-1)
+                if((*it)->empty())
                     chunk_pool.erase(it);
                 break;
             }
