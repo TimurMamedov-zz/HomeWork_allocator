@@ -9,7 +9,7 @@ configure_file(version.h.in version.h)
 
 set(HEADERS CustomAllocator.h ChunkPool.h functions.h CustomContainer.h)
 
-add_executable(allocator ${HEADERS} ${SOURCES} main.cpp)
+add_executable(allocator ${HEADERS} main.cpp)
 
 set (TEST test_allocator.cpp)
 add_executable (${TEST} test_allocator.cpp)
