@@ -11,7 +11,7 @@ set(HEADERS CustomAllocator.h ChunkPool.h functions.h CustomContainer.h)
 
 add_executable(allocator ${HEADERS} main.cpp)
 
-set (TEST test_allocator.cpp)
+set (TEST test_allocator)
 add_executable (${TEST} test_allocator.cpp)
 
 set_target_properties (allocator ${TEST} PROPERTIES
