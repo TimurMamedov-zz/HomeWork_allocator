@@ -59,7 +59,7 @@ public:
 private:
     array_type array;
     std::size_t current = 0;
-    std::size_t SIZE = size;
+    std::size_t SIZE = 0;
 };
 
 template <class T, std::size_t size = 10>
@@ -103,7 +103,9 @@ public:
             {
                 (*it)->free(ptr, n);
                 if((*it)->empty())
+                {
                     chunk_pool.erase(it);
+                }
                 break;
             }
         }

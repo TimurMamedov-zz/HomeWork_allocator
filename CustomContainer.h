@@ -211,15 +211,23 @@ public:
         return begin() != cont.begin() || this->size() != cont.size();
     }
 
-    void push_back(const value_type& value)
+    iterator last()
     {
-        if(header)
-        {
-            auto it = this->begin();
+        auto it = this->begin();
+        if(it.getPointer())
             while (it.getPointer()->next)
             {
                 it++;
             }
+
+        return it;
+    }
+
+    void push_back(const value_type& value)
+    {
+        if(header)
+        {
+            auto it = last();
             auto node = create_node(value);
             it.getPointer()->next = node;
             node->prev = it.getPointer();
@@ -234,6 +242,11 @@ public:
     iterator begin()
     {
         return iterator(header);
+    }
+
+    iterator rbegin()
+    {
+        return iterator(nullptr);
     }
 
     const_iterator begin() const
@@ -281,14 +294,25 @@ public:
     {
         return begin() == end();
     }
+
     void clear()
     {
         auto& alloc = this->get_Node_allocator();
-        for(auto it = this->begin(); it != this->end(); it++)
+        auto tmp = last();
+        for(auto it = tmp; it != this->rbegin();)
         {
+            if(it.getPointer()->prev)
+            {
+                tmp = --it;
+                it++;
+            }
+            else
+                tmp = this->rbegin();
             alloc.destroy(it.getPointer());
             alloc.deallocate(it.getPointer(), 1);
+            it = tmp;
         }
+        header = nullptr;
         setSize(0);
     }
 

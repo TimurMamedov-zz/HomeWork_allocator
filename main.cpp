@@ -19,7 +19,7 @@ int main(int argc, char const *argv[])
         }
 
         CustomContainer<int> list;
-        for(std::uint64_t i = 0; i < 10; i++)
+        for(std::uint64_t i = 0; i < 11; i++)
             list.push_back(i);
 
         for(const auto& elem : list)
