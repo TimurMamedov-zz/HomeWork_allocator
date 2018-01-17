@@ -1,9 +1,9 @@
 #pragma once
 #include "ChunkPool.h"
 
-template <class T> class CustomAllocator;
+template <class T, std::size_t size> class CustomAllocator;
 
-template <> class CustomAllocator<void>
+template <> class CustomAllocator<void, 10>
 {
 public:
     using pointer = void*;
@@ -13,11 +13,11 @@ public:
     template <class U>
     struct rebind
     {
-        using other = CustomAllocator<U>;
+        using other = CustomAllocator<U, 10>;
     };
 };
-
-template <class T>
+//----------------------------------------------------
+template <class T, std::size_t size = 10>
 class CustomAllocator
 {
 public:
@@ -32,7 +32,7 @@ public:
     template <class U>
     struct rebind
     {
-        using other = CustomAllocator<U>;
+        using other = CustomAllocator<U, size>;
     };
 
     CustomAllocator()
@@ -48,8 +48,8 @@ public:
 
     ~CustomAllocator() {}
 
-    pointer address(reference r) const { return &r; }
-    const_pointer address(const_reference r) const { return &r; }
+    pointer address(reference r) const noexcept { return &r; }
+    const_pointer address(const_reference r) const noexcept { return &r; }
 
     pointer allocate( size_type n, CustomAllocator<void>::const_pointer hint = 0 )
     {
@@ -81,9 +81,9 @@ public:
     }
 
 private:
-    ChunkPool<value_type> myPool;
+    ChunkPool<value_type, size> myPool;
 };
-
+//-----------------------------------------------------------
 template <class T1, class T2>
 bool operator == ( const CustomAllocator<T1>& lhs, const CustomAllocator<T2>& rhs) noexcept
 {

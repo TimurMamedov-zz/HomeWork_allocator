@@ -51,7 +51,7 @@ public:
         }
     }
 
-    inline bool empty() const
+    inline bool empty() const noexcept
     {
         return !SIZE;
     }
@@ -61,8 +61,8 @@ private:
     std::size_t current = 0;
     std::size_t SIZE = 0;
 };
-
-template <class T, std::size_t size = 10>
+//----------------------------------------------------------------------
+template <class T, std::size_t size>
 class ChunkPool
 {
 public:
@@ -114,4 +114,3 @@ public:
 private:
     std::vector<std::unique_ptr<Chunk<T, size> > > chunk_pool;
 };
-//-----------------------------------------------------------------------------------

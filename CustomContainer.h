@@ -19,17 +19,17 @@ public:
 
         Tp data;
 
-        Tp* valptr() { return &data; }
+        Tp* valptr() const { return &data; }
     };
     std::size_t size = 0;
 
 protected:
     using Node_alloc_type = typename Alloc::template
     rebind<List_node>::other;
-    Node_alloc_type& get_Node_allocator(){ return M_impl; }
+    Node_alloc_type& get_Node_allocator() noexcept { return M_impl; }
     Node_alloc_type M_impl;
 };
-
+//---------------------------------------------------------------------
 template <class T, class Alloc = std::allocator<T> >
 class CustomContainer : protected CustomContainer_Base<T, Alloc>
 {
@@ -44,6 +44,7 @@ public:
 
     typedef typename CustomContainer_Base<T, Alloc>::List_node Node;
 
+    //------------------------------------------------
     class iterator
     {
     public:
@@ -94,22 +95,23 @@ public:
             return tmp;
         }
 
-        reference operator*() const
+        reference operator*() const noexcept
         {
             return pNode->data;
         }
-        pointer operator->() const
+        pointer operator->() const noexcept
         {
             return &pNode->data;
         }
 
-        Node* getPointer() const
+        Node* getPointer() const noexcept
         {
             return pNode;
         }
 
         Node* pNode = nullptr;
     };
+    //-------------------------------------------------
     class const_iterator
     {
     public:
@@ -125,11 +127,11 @@ public:
             pNode = node;
         }
 
-        bool operator==(const iterator& it) const
+        bool operator==(const iterator& it) const noexcept
         {
             return pNode == it.pNode;
         }
-        bool operator!=(const iterator& it) const
+        bool operator!=(const iterator& it) const noexcept
         {
             return pNode != it.pNode;
         }
@@ -160,19 +162,19 @@ public:
             return tmp;
         }
 
-        reference operator*() const
+        reference operator*() const noexcept
         {
             return pNode->data;
         }
 
-        pointer operator->() const
+        pointer operator->() const noexcept
         {
             return &pNode->data;
         }
 
         const Node *pNode = nullptr;
     };
-
+    //------------------------------------------------------
     CustomContainer() = default;
     CustomContainer(const CustomContainer& cont)
     {
@@ -201,17 +203,17 @@ public:
         }
     }
 
-    bool operator==(const CustomContainer& cont) const
+    bool operator==(const CustomContainer& cont) const noexcept
     {
         return begin() == cont.begin() && this->size() == cont.size();
     }
 
-    bool operator!=(const CustomContainer& cont) const
+    bool operator!=(const CustomContainer& cont) const noexcept
     {
         return begin() != cont.begin() || this->size() != cont.size();
     }
 
-    iterator last()
+    iterator last()  noexcept
     {
         auto it = this->begin();
         if(it.getPointer())
@@ -239,58 +241,40 @@ public:
         setSize(size() + 1);
     }
 
-    iterator begin()
+    iterator begin() noexcept
     {
         return iterator(header);
     }
 
-    iterator rbegin()
+    iterator rbegin() const noexcept
     {
         return iterator(nullptr);
     }
 
-    const_iterator begin() const
+    const_iterator begin() const noexcept
     {
         return const_iterator(header);
     }
-    const_iterator cbegin() const
+    const_iterator cbegin() const noexcept
     {
         return const_iterator(header);
     }
 
-    iterator end() { return iterator(nullptr); }
-    const_iterator end() const { return iterator(nullptr); }
-    const_iterator cend() const { return iterator(nullptr); }
+    iterator end() noexcept { return iterator(nullptr); }
+    const_iterator end() const noexcept{ return iterator(nullptr); }
+    const_iterator cend() const noexcept { return iterator(nullptr); }
 
-    void swap(CustomContainer& cont)
-    {
-        if(*this != cont)
-        {
-            auto tmp = this->header;
-            auto tmpSize = this->size();
-            this->header = cont.header;
-            cont.header = tmp;
-            setSize(cont.size());
-            cont.setSize(tmpSize);
-        }
-    }
-
-    size_type size() const
+    size_type size() const noexcept
     {
         return CustomContainer_Base<T, Alloc>::size;
     }
 
-    void setSize(size_type size) noexcept
-    {
-        CustomContainer_Base<T, Alloc>::size = size;
-    }
-
-    size_type max_size() const
+    size_type max_size() const noexcept
     {
         return this->get_Node_allocator().max_size();
     }
 
-    bool empty() const
+    bool empty() const noexcept
     {
         return begin() == end();
     }
@@ -324,6 +308,11 @@ private:
         auto p = alloc.allocate(1);
         alloc.construct(p, std::forward<Args>(args)...);
         return p;
+    }
+
+    void setSize(size_type size) noexcept
+    {
+        CustomContainer_Base<T, Alloc>::size = size;
     }
 
     Node* header = nullptr;
